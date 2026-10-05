@@ -8,8 +8,13 @@ export default function EmotionIndicator() {
 
   useEffect(() => {
     const update = () => {
-      setEmotions(emotionEngine.getActiveEmotions().slice(0, 8));
-      setMood(emotionEngine.getMood());
+      if (!emotionEngine) return;
+      try {
+        setEmotions(emotionEngine.getActiveEmotions().slice(0, 8));
+        setMood(emotionEngine.getMood());
+      } catch (error) {
+        console.warn('EmotionIndicator update error:', error);
+      }
     };
     update();
     const interval = setInterval(update, 200);
@@ -21,7 +26,7 @@ export default function EmotionIndicator() {
       <div className="flex items-center justify-between mb-2">
         <span className="text-[10px] font-mono text-teal-500/70">EMOTION ENGINE</span>
         <span className="text-[10px] font-mono text-gray-500">
-          {emotionEngine.getEmotionCount()} emotions loaded
+          {emotionEngine ? emotionEngine.getEmotionCount() : 0} emotions loaded
         </span>
       </div>
       

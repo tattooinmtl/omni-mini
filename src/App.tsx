@@ -34,44 +34,59 @@ function App() {
 
   // Initialize
   useEffect(() => {
+    let emotionInterval: number;
+    let neuralInterval: number;
+    let activityInterval: number;
+
     const init = async () => {
-      // Create session
-      sessionIdRef.current = await memoryEngine.createSession();
-      
-      // Load saved messages
-      const saved = await memoryEngine.getRecentMessages(50);
-      setMessages(saved.reverse());
+      try {
+        // Create session
+        sessionIdRef.current = await memoryEngine.createSession();
+        
+        // Load saved messages
+        const saved = await memoryEngine.getRecentMessages(50);
+        setMessages(saved.reverse());
 
-      // Set API key
-      if (settings.apiKey) {
-        minimaxAPI.setApiKey(settings.apiKey);
+        // Set API key
+        if (settings.apiKey) {
+          minimaxAPI.setApiKey(settings.apiKey);
+        }
+
+        // Start emotion engine update loop
+        emotionInterval = window.setInterval(() => {
+          if (emotionEngine) {
+            emotionEngine.update(1);
+            emotionEngine.recordSnapshot();
+          }
+        }, 100);
+
+        // Start neural engine update loop
+        neuralInterval = window.setInterval(() => {
+          if (neuralEngine) {
+            neuralEngine.update(1);
+          }
+        }, 50);
+
+        // Auto-trigger some neural activity periodically
+        activityInterval = window.setInterval(() => {
+          if (neuralEngine) {
+            const actions = ['think', 'feel', 'session'];
+            const randomAction = actions[Math.floor(Math.random() * actions.length)];
+            neuralEngine.processAction(randomAction, 'ambient');
+          }
+        }, 5000);
+      } catch (error) {
+        console.error('Initialization error:', error);
       }
-
-      // Start emotion engine update loop
-      const emotionInterval = setInterval(() => {
-        emotionEngine.update(1);
-        emotionEngine.recordSnapshot();
-      }, 100);
-
-      // Start neural engine update loop
-      const neuralInterval = setInterval(() => {
-        neuralEngine.update(1);
-      }, 50);
-
-      // Auto-trigger some neural activity periodically
-      const activityInterval = setInterval(() => {
-        const actions = ['think', 'feel', 'session'];
-        const randomAction = actions[Math.floor(Math.random() * actions.length)];
-        neuralEngine.processAction(randomAction, 'ambient');
-      }, 5000);
-
-      return () => {
-        clearInterval(emotionInterval);
-        clearInterval(neuralInterval);
-        clearInterval(activityInterval);
-      };
     };
+    
     init();
+
+    return () => {
+      if (emotionInterval) clearInterval(emotionInterval);
+      if (neuralInterval) clearInterval(neuralInterval);
+      if (activityInterval) clearInterval(activityInterval);
+    };
   }, []);
 
   // Handle settings changes

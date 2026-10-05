@@ -10,14 +10,17 @@ export default function NeuralNetwork() {
   const particlesRef = useRef<Array<{x: number; y: number; vx: number; vy: number; life: number; color: string}>>([]);
 
   useEffect(() => {
-    const container = canvasRef.current?.parentElement;
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const container = canvas.parentElement;
     if (!container) return;
+    
     const obs = new ResizeObserver(entries => {
       for (const entry of entries) {
-        setDimensions({
-          width: entry.contentRect.width,
-          height: entry.contentRect.height,
-        });
+        const { width, height } = entry.contentRect;
+        if (width > 0 && height > 0) {
+          setDimensions({ width, height });
+        }
       }
     });
     obs.observe(container);
@@ -26,9 +29,15 @@ export default function NeuralNetwork() {
 
   useEffect(() => {
     const canvas = canvasRef.current;
-    if (!canvas) return;
+    if (!canvas) {
+      console.warn('Canvas ref is null in NeuralNetwork');
+      return;
+    }
     const ctx = canvas.getContext('2d');
-    if (!ctx) return;
+    if (!ctx) {
+      console.warn('Could not get 2d context in NeuralNetwork');
+      return;
+    }
 
     const draw = () => {
       timeRef.current += 0.016;
